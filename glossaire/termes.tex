@@ -1,0 +1,62 @@
+
+% explications :
+% - https://en.wikibooks.org/wiki/LaTeX/Glossary
+
+% \newglossaryentry{<label>}{
+%	 name = {<nom>},
+%	 description = {<description>},
+%	 first = {<premier appel>},
+%	 plural = {<si on ajoute pas de 's' à la fin>},
+%	 symbol = {<symbole pi>},
+% 	 see = {<label_a_voir},
+% }
+
+% \newacronym{<label>}{<abbreviation>}{<full>}
+% \newacronym[longplural={pluriel}]{<label>}{<abbreviation>}{<full>}
+
+
+% utilisation (pour tout):
+% - \gls(<label>)
+% - \Gls(<label>)  		=> avec majuscule
+% - \glspl(<label>)  	=> pluriel
+% - \Glspl(<label>)		=> pluriel avec majuscule
+% - \glsdesc{<label>}  	=> affiche la description
+% - \glssymbol{<label>}	=> affiche le symbole
+
+% utilisation en plus pour les accronymes :
+% - \acrshort{<label>}	=> donne l'abbréviation
+% - \acrlong{<label>}	=> donne la description "full"
+% - \acrfull{<label>}	=> donne "full (abbreviation)"
+
+
+
+\newacronym{ESN}{ESN}{entreprise de services du numérique}
+\newacronym{IHM}{IHM}{Interface Homme-Machine}
+\newacronym{MRE}{MRE}{Magnetic Rotary Encoders}
+\newacronym{SSII}{SSII}{société de services en ingénierie informatique}
+
+
+
+\newglossaryentry{algorithme}{
+    name = {algorithme},
+    description = {une manière de résoudre un problème. Un algorithme est constitué d'une séquence d'opérations (ou d'instructions) finies},
+    see = {programme},
+}
+
+\newglossaryentry{API}{
+    name = {API},
+    description = {une interface de programmation (Application Programming Interface) correspond à l'ensemble des fonctions et des ressources que fournit un logiciel afin de permettre à d'autres logiciels d'utiliser les services qu'il propose},
+    first = {interface de programmation (API)},
+}
+
+\newglossaryentry{application}{
+    name = {application},
+    description = {un programme ou un ensemble de programmes permettant de réaliser une ou plusieurs tâches},
+    see = {programme},
+}
+
+
+% add all entries in the glossary
+% - à mettre à la toute fin du document
+% - http://tex.stackexchange.com/questions/150228/glossaries-display-the-page-number-but-not-the-current-page
+%\glsaddallunused

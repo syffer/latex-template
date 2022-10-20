@@ -1,0 +1,1072 @@
+%
+% auteur : Maxime PINEAU
+% version : 2.2
+% 
+% biber build/% 	(avant: biber --output-directory=./build %)
+% makeglossaries -d ./build %  
+%
+% mise à jour 2.2 : 
+% - mathtools 
+% - varioref + hyperref + cleveref + babel (passage de la langue)
+% - obtenir le schema de numérotation actuel et sa dernière page (footer automatique)
+% - simplification de la partie header/footer 
+% - authblk (multiple auteurs avec différentes affiliations)
+% - bib style apa pour french et english 
+%
+% mise à jour 2.1.1 :
+% - correction listoflisting (problème d'indentation)
+% - booktabs + saving footnotes table 
+% - compteur listing comme figures et tableaux 
+%
+% mise à jour 2.0 :
+% - passage en .sty + paramètres (couleurs, debug)
+% - minted + listings avec le même compteur 
+% - ajout glo, lot, lof, lol, bib automatiquement dans toc 
+% 	=> (reste un problème d'indentation avec part)
+%
+% mise à jour 1.7 : 
+% - ajout des colorations syntaxiques de minted
+% - %non-fini% tocbibind : ajout automatique des lof et lot dans le toc 
+% - nomencl
+%
+% mise à jour 1.6 : 
+% - atveryend : éviter erreurs etoolbox et pagelst (sharelatex)
+%
+% mise à jour 1.5 : 
+% - un seul préambule 
+% - etoolbox : if then else
+% - titlesec, titletoc : changer style des sections
+%
+% mise à jour 1.4 : 
+% - modification listing + ajout JavaScript (style sublimtext)
+%
+% mise à jours 1.3 : 
+% - calc : calcule avec compteur latex (aurotise +, ...)
+% - dcolumn : aligner colonne sur la décimale
+% - siunitx : unité et format des nombres
+% - auteur hyperref
+% - changer color en xcolor
+%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{packages/preambule}[2016/07/20 v2.3 preambule perso]
+
+\RequirePackage{atveryend}  % chargé pour éviter erreurs entre pagelst et etoolbox
+\RequirePackage{etoolbox}	% \newtoggle, \toggletrue, \ifbool, \iftoggle 
+\RequirePackage{keyval}		% key=val options
+\RequirePackage{kvoptions}	% option key=val pour packages 
+
+
+% ********************************************************************
+% Les options 
+% - http://tex.stackexchange.com/questions/30013/pass-keyval-string-option-to-babel/30150#30150 
+% ********************************************************************
+
+\SetupKeyvalOptions{
+	family = package,
+	prefix = package@
+}
+
+\DeclareBoolOption[false]{colorlinks}	% affiche la couleur des hyperrefs (défaut: faux) 
+\DeclareBoolOption[false]{debug}		% affiche informations de debug (défaut: false) 
+\DeclareBoolOption[false]{minitoc}		% utiliser minitoc entre les chapitres (non fini)
+\DeclareStringOption[none]{bibsorting}[none] 			% nyt, anyt, none, ...
+\DeclareStringOption[alphabetic]{bibstyle}[alphabetic] 
+\DeclareStringOption[english,french]{languages}[french] % languages={english, french} 
+
+% autres options 
+% \DeclareOption* 
+\DeclareDefaultOption{
+	\PackageWarning{preambule}{Unknown ‘\CurrentOption’}{}
+}
+
+% exécute le code des options passées 
+% * pour les traiter dans l'ordre d'apparition 
+%\ProcessOptions\relax
+\ProcessKeyvalOptions* 
+
+% passage d'options aux packages 
+% utilisation de '\expendafter' pour pouvoir écrire languages={english, french} (espace) 
+% - http://northstar-www.dartmouth.edu/doc/texmf-dist/doc/latex/oberdiek/example-mycolorsetup.sty 
+\expandafter\PassOptionsToPackage\expandafter{\package@languages}{babel}
+\expandafter\PassOptionsToPackage\expandafter{\package@languages}{varioref}
+\expandafter\PassOptionsToPackage\expandafter{\package@languages}{cleveref}
+
+
+
+% ********************************************************************
+% Mise en page 
+% ********************************************************************
+
+% Marges de la page
+% - package fullpage : tout en 1in 
+% - 'headheight' augmenté afin d'éviter des warnings 
+\usepackage[top=0.7in, bottom=0.7in, left=0.8in, right=0.8in, headheight=27.06pt]{geometry} 
+
+
+
+
+% ********************************************************************
+% Accents
+% ********************************************************************
+\usepackage[T1]{fontenc}	% "font" utilisé pour afficher les caractères
+\usepackage[utf8]{inputenc} % permet d'écrire les accents au clavier
+% option de "inputenc" doit correspondre au format de sauvegarde du fichier 
+
+
+
+% ********************************************************************
+% Internationnalisation 
+% - langue passée avec kvoptions 
+% - http://tex.stackexchange.com/questions/30013/pass-keyval-string-option-to-babel/30150#30150
+% ********************************************************************
+\usepackage{babel}	% [\package@langue] 
+\usepackage{iflang}	% IfLanguageName{}{then}{else} 
+
+% IfLanguageFamilyFrench (v1.7)
+\IfLanguageName{french}{
+	\frenchbsetup{StandardLists=true} 	% evite erreurs de personalisation listes
+}{}
+
+% écriture des nombres 
+% \unit{\numprint{''nombre''}}{\''unité''}
+% - https://fr.wikibooks.org/wiki/LaTeX/%C3%89crire_de_la_physique 
+\usepackage[autolanguage]{numprint}	% selon la langue (\numprint[unite]), après babel !
+\usepackage[detect-all]{siunitx} 	% unités et format (km-1, 1/km) : \num \SI{10}{\hertz}
+
+
+
+% ********************************************************************
+% Tout ce qui est textuel 
+% ********************************************************************
+\usepackage{microtype} 	% améliore espace entre mots et lettres (peu visible), plus facile à lire 
+\usepackage{mathptmx}	% font family to times 
+\usepackage{indentfirst}% indente le premier paragraphe (ce qui n'est pas le cas par défaut)
+\usepackage{setspace}	% espace entre les lignes (\onehalfspacing \singlespacing \doublespacing \setstretch{<factor>})
+
+% utiliser \par ou ~~ à la place (non automatique...)
+%\usepackage{parskip}			% espace entre les paragraphes (mais retire l'indentation)
+%\setlength{\parindent}{15pt}	% restaure l'indentation 	% \edef\restoreparindent{\parindent=\the\parindent\relax}
+
+\usepackage{lipsum}
+\usepackage{multicol} 	% séparer le texte sur plusieurs colonnes
+%\setlength{\multicolsep}{3pt}   % espace avant et apres (défaut: 12pt) 
+
+% pour changer le style des chapters, sections, ... 
+% - /!\ incompatibilité avec tobbibind
+% - http://tex.stackexchange.com/questions/74506/problems-with-titlesec-hyperref-biblatex-and-tocbibind
+%\usepackage[pagestyles]{titlesec}	% pagestyles = \usepackage{titleps} 
+%\usepackage{titletoc}
+
+
+
+% ********************************************************************
+% Mathématique 
+% - \mathbb{N}
+% - mathrsfs : http://tex.stackexchange.com/questions/151549/mathscr-latex-or-xelatex 
+% - https://en.wikibooks.org/wiki/LaTeX/Advanced_Mathematics#The_cases_environment 
+% ********************************************************************
+\usepackage{amsmath}
+\usepackage{amssymb}	% principaux symboles + amsfonts (automatique)
+%\usepackage{mathtools}	% améliore amsmath 
+%\usepackage{mathrsfs}	% Police calligraphique \mathscr{A} 
+%\usepackage{amsthm}	% theoremes 
+%\usepackage{theorem}
+\usepackage{calc}	% permet les calcules avec les compteurs latex
+
+
+
+% ********************************************************************
+% Couleurs
+% ********************************************************************
+\usepackage[usenames, dvipsnames, svgnames, x11names, table]{xcolor}
+% - couleurs prédéfinit : http://ctan.imsc.res.in/macros/latex/contrib/xcolor/xcolor.pdf#page=38
+% - création couleurs connues : http://latexcolor.com/ 
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{cornsilk}{rgb}{1.0, 0.97, 0.86}
+\definecolor{sublim background}{RGB}{39, 40, 34}
+\definecolor{sublim string}{RGB}{230, 219, 116}
+\definecolor{sublim keyword}{RGB}{249, 38, 89}
+\definecolor{sublim comment}{RGB}{117, 113, 94}
+\definecolor{sublim nbword}{RGB}{102, 217, 239}
+\definecolor{sublim val}{RGB}{174, 129, 255}
+\definecolor{monokai background}{HTML}{272822}
+
+
+
+% ********************************************************************
+% 
+% ********************************************************************
+\usepackage{pdfpages}	% pour incorporer un fichier PDF
+\usepackage{url}		% comme une balise <a>
+%\usepackage{import}	% importer fichiers de façon plus précise (\import{dossier le contenant}{nom fichier})
+\usepackage{comment}	% commentaires multi-lignes (\begin{comment})
+\usepackage{authblk}	% multiples auteurs avec différentes affiliations (\author \affil \author[] \affil[])
+
+
+
+% ********************************************************************
+% Mode paysage
+% ********************************************************************
+\usepackage{pdflscape}	% page mode paysage \begin{landscape}
+
+% variables temporaires pour mylandscape
+\newlength{\newLeftMargin}
+\newlength{\newTopMargin}
+% mon landscape : \begin{mylandscape}....
+\newenvironment{mylandscape} {
+	\cleardoublepage 
+	\begingroup
+	% "tourner la page"
+	\newpage
+	\paperwidth=\pdfpageheight
+	\paperheight=\pdfpagewidth
+	\pdfpageheight=\paperheight
+	\pdfpagewidth=\paperwidth
+	% calcul des nouvelles marges
+	\setlength{\newLeftMargin}{(\paperwidth - \textheight) / 2}
+	\setlength{\newTopMargin}{(\paperheight - \textwidth) / 2}
+	% modification des marges et de la zone du contenu (textheight...) 
+	\newgeometry{textwidth=\textheight, textheight=\textwidth, left=\newLeftMargin, top=\newTopMargin}
+	% ajuster la longueur du header selon la longueur de la page
+	\headwidth=\textwidth
+	% modifier la zone des paragraphes
+	\vsize=\textheight
+	\hsize=\textwidth
+} {	
+	\cleardoublepage
+	\restoregeometry
+	\endgroup
+	% bien replacer le footer de la page suivante seulement
+	% mauvaise solution...
+	\begin{landscape}
+	\end{landscape}
+}
+
+
+
+% ********************************************************************
+% Table of Contents  
+% ******************************************************************** 
+\usepackage[nottoc]{tocbibind} 	% ajoute lot et lof dans la toc 
+%\usepackage{tocloft}	% to control typographic design of toc, lof 
+
+% modification header lof lot lol 
+% - http://tex.stackexchange.com/questions/204974/how-to-change-the-appearance-of-listof-headers 
+\renewcommand{\tocetcmark}[1]{
+	\markboth{#1}{}
+}
+
+% modification header toc 
+% - seulement si nottoc
+% - http://tex.stackexchange.com/questions/121688/remove-all-caps-toc-lof-in-header 
+% - http://tex.stackexchange.com/questions/9348/tableofcontents-and-listoffigures-suppress-header-after-first-page 
+% - http://tex.stackexchange.com/questions/152773/please-tutor-the-usage-of-patchcmd-and-xpatch 
+% - http://tex.stackexchange.com/questions/36955/display-source-for-a-command 
+\patchcmd{\tableofcontents}
+	{\@mkboth{\MakeUppercase\contentsname}{\MakeUppercase\contentsname}} % code to replace
+	{\@mkboth{\MakeUppercase\contentsname}{}}							 % replacement code 
+	{}	% success
+	{}	% failure 
+
+
+
+% ********************************************************************
+% Listes
+% - incompatibilité enimitem/enumerate
+% - http://tex.stackexchange.com/questions/58852/possible-incompatibility-with-enumitem 
+% ********************************************************************
+\usepackage{paralist}	% une liste ayant ses éléments en ligne
+\usepackage[shortlabels]{enumitem}	% personaliser les listes 
+
+% on essaie d'imiter la présentation de Babel
+% voir : http://daniel.flipo.free.fr/frenchb/frenchb-doc.pdf
+\newlength\mylabelwidth
+\newcommand*{\mylabel}{\textemdash}  % ou \textendash (tiret plus court)
+\settowidth{\mylabelwidth}{\mylabel}
+\setlist[itemize]{label=\mylabel, nosep}
+\setlist[1]{labelindent=\parindent}
+\setlist{
+	labelwidth=\mylabelwidth,
+	itemsep=0.4ex plus 0.2ex minus 0.2ex,
+	parsep=0.4ex plus 0.2ex minus 0.2ex,
+	topsep=0.8ex plus 0.4ex minus 0.4ex,
+	partopsep=0.4ex plus 0.2ex minus 0.2ex,
+	leftmargin=!
+}
+%\setlist[itemize]{label={---}, leftmargin=45pt, parsep=0cm, itemsep=0cm, topsep=0cm} % ancienne personnalisation
+
+
+
+% ********************************************************************
+% Figures
+% ********************************************************************
+\usepackage{graphicx}	% pour inclure les images
+\usepackage{float} 		% placement H pour les figures
+\usepackage{wrapfig}	% faire flotter une figure dans un paragraphe
+\usepackage{grffile}	% autorise les " " dans les noms 
+\usepackage[font=small, labelfont=bf]{caption}
+\usepackage{subcaption}% placer plusieurs figures cote à cote 
+%\graphicspath{ {./images/} }   % répertoire des images par défaut
+
+
+
+% ********************************************************************
+% Tableaux 
+% - https://www.tug.org/pracjourn/2007-1/mori/mori.pdf 
+% - http://www.howtotex.com/packages/improve-your-tables-with-booktabs/  
+% ********************************************************************
+\usepackage{array} 		% texte en gras, modifier taille du tableau
+\usepackage{booktabs} 	% \toprule \midrule \bottomrule \cmidrule(lr){2-3} 
+\usepackage{tabularx}	% X : taille de colonne se calcule toute seule
+\usepackage{dcolumn} 	% D{sep.in}{sep.out}{nbDigitBefore.nbDigitAfter} : aligner décimale
+\usepackage{longtable}	% tableau de plus d'une page
+\usepackage{multirow}	% \multicolumn{nbCell}{alignement}{texte} + \multirow{nbLignes}*{texte}
+\usepackage{makecell}	% \thead 
+%\usepackage{hhline}	% nouvelle gestion des lignes horizontales 
+
+% palier à certains défauts des tableaux standards 
+\setcellgapes{1pt}  	
+\makegapedcells
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash }b{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash }b{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash }b{#1}}
+\newcolumntype{M}[1]{>{\raggedright}m{#1}}
+\newcolumntype{d}[1]{D{,}{.}{#1}} 	% d{nbDigitBefore.nbDigitAfter}
+\newcommand{\otoprule}{\midrule[\heavyrulewidth]} % after \toprule (delimite header)
+
+%\usepackage[flushleft]{threeparttable} %tablenotes
+
+
+
+% ********************************************************************
+% Notes de bas de pages
+% ********************************************************************
+\usepackage{footnotehyper} 		% \begin{savenotes} pour dans tableaux 
+\makesavenoteenv{table}			% save table footnote automatically 
+\makesavenoteenv{tabular} 		
+\usepackage[bottom, perpage]{footmisc} 
+\usepackage[multiple]{fnpct}	% multiple footnotes '1, 2' : \footnote{1;2}
+% - fnpct incompatible avec footnote : \makesavenoteenv 
+
+% fix pour \multfootnote 
+% - babel redéfini ';' au début du document 
+% - \shorthandon commande de babel 
+% - http://tex.stackexchange.com/questions/320066/incompatibility-between-french-babel-and-fnpct-multfootnote 
+% - http://tex.stackexchange.com/questions/121496/is-afterendpreamble-really-executing-code-after-any-atbegindocument-code
+\newcommand{\ifnotshorthand}[1]{
+	\@ifundefined{bbl@active@\string#1}
+}
+
+\AtBeginDocument{
+	\ifnotshorthand{;}{}{
+		\shorthandon{;} 
+		\setfnpct{mult-fn-delim={;}}
+		\shorthandoff{;}
+	}
+}
+
+
+
+% ********************************************************************
+% Indexe
+% ********************************************************************
+%\usepackage[xindy]{imakeidx} 	% (plusieurs indexes possibles)
+%\makeindex						% générer les indexes
+%% \printindex <= a mettre quelque par pour afficher les indexes
+%% utiliser "mot \index{mot}"
+
+
+
+% ********************************************************************
+% Nomenclature
+% ********************************************************************
+%\usepackage[french, intoc]{nomencl}
+%\makenomenclature
+%% \printnomenclature
+%% \nomenclature{$h$}{Planck constant}
+
+
+
+% ********************************************************************
+% Bibliographie et citations 
+% - http://www.latex-tutorial.com/tutorials/beginners/lesson-7/ 
+% ********************************************************************
+\usepackage[
+	hyperref = true,
+	backref = true, 	% back reference to the citation (index like)
+	backend = biber,
+	sorting = \package@bibsorting, 	% "none" pour ranger par ordre d'apparition
+	style = \package@bibstyle, 
+]{biblatex}
+
+% sorting tny 
+% - title, name, year, version 
+% - http://tex.stackexchange.com/questions/46868/biblatex-sorting-by-date 
+% - http://ctan.imsc.res.in/macros/latex/contrib/biblatex/doc/biblatex.pdf#subsubsection.4.5.6 
+\DeclareSortingScheme{tny}{
+	\sort{
+		\field{title} 
+		\field{author} 
+		\field{year} 
+	}
+}
+
+% for APA-style, maps a babel/polyglossia language identifier to an lbx file (doc p.223)
+% - http://tex.stackexchange.com/questions/312091/citations-in-small-caps-using-biblatex-in-french-apa-style 
+% - http://latex-community.org/forum/viewtopic.php?f=5&t=20343 
+\expandafter\ifstrequal\expandafter{\package@bibstyle}{apa}{
+	\DeclareLanguageMapping{\languagename}{\languagename-apa}
+	% \DeclareCaseLangs
+}
+
+% define the list of languages for the sentence case text 
+% - first word capitalized, the rest to lower case (alter the text) 
+% - default command replace the current setting 
+% - * appends its arguments to the current setting 
+\DeclareCaseLangs*{\package@languages} 	
+
+% (1) biblio in toc by default (exept when passing arguments : heading=bibintoc) 
+% - http://tex.stackexchange.com/questions/89884/bibliography-and-headers-with-titleps-and-biblatex 
+% (2) afficher toute la bibliographie même celle non utilisées
+\let\oldPrintbibliography\printbibliography
+\renewcommand*{\printbibliography}[1][heading=bibintoc]{
+	\nocite{*}	% affiche les références non utilisées également 
+	\oldPrintbibliography[#1]
+}
+
+% modifier header bibliographie 
+% remplacer '\markboth{#1}{#1}' par '\markboth{#1}{}'
+% - http://tex.stackexchange.com/questions/113014/removing-section-name-in-heading-of-reference-page 
+\ifundef{\chapter}{
+	\defbibheading{bibintoc}[\refname]{
+		\section*{#1}
+		\addcontentsline{toc}{section}{#1}
+		\markboth{#1}{}
+	}
+}{
+	\defbibheading{bibintoc}[\bibname]{
+		\chapter*{#1}
+		\addcontentsline{toc}{chapter}{#1}
+		\markboth{#1}{}
+	}
+}
+
+% pour la gestion des guillemets français.
+% - https://cs.sharelatex.com/learn/Typesetting_quotations 
+\usepackage[babel=true]{csquotes} 
+
+
+
+% ********************************************************************
+% Renommage
+% - http://tex.stackexchange.com/questions/82993/how-to-change-the-name-of-document-elements-like-figure-contents-bibliogr
+% ********************************************************************
+
+% - sans Babel 
+%\renewcommand{\figurename}{Fig.}
+%\renewcommand{\contentsname}{Table of Contents}
+
+% - avec Babel 
+%\addto\captionsenglish{ 
+%  \renewcommand{\figurename}{Fig.} 
+%  \renewcommand{\contentsname}{Table of Contents} 
+%}
+
+% ! si utilisation de biblatex, le renommage doit se faire dans biblatex
+% (\bibname et \refname ne marcheront pas)
+
+
+
+
+% ********************************************************************
+% Listing de code source
+% ********************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Linstings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{listings} 
+
+% pour ajouter d'autres "literates" en plus de ceux déjà existant (sans les effacer)
+% attention, ne prend pas l'étoile '*'
+% voir : http://tex.stackexchange.com/questions/149056/how-can-i-define-additional-literate-replacements-without-deleting-existing-ones
+\def\addToLiterate#1{\edef\lst@literate{\unexpanded\expandafter{\lst@literate}\unexpanded{#1}}}
+\lst@Key{moreliterate}{}{\addToLiterate{#1}}
+
+% utilisé pour bloquer la commande \textcolor
+\newcommand{\textcolordummy}[2]{#2}
+
+
+% pour les accents
+\lstset{literate=
+  {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+  {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+  {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+  {À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+  {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+  {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+  {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+  {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+  {œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+  {ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
+  {ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+  {€}{{\EUR}}1 {£}{{\pounds}}1
+}
+
+\lstset{ %
+	language=Java,			% langage par défaut 
+	escapeinside={(*@}{@*)},% pour ajouter du Latex dans le code
+	%morekeywords={*,...},	% pour ajouter plus de mots-clefs
+	%otherkeywords={>,<,.,;,-,!,=,~,+,*,&,|},
+    %morekeywords={>,<,.,;,-,!,=,~,+,*,&,|},
+	%keepspaces=true,		% garder l'indentation du code, keep space (possibly needs columns=flexible)	
+	% ------- Style ------ 
+	% ------- Contour du listing -------
+	title=\lstname,	% affiche nom des fichiers lors de \lstinputlisting;
+	captionpos=b,	% position du caption en bottom		
+	frame=trBL,	% fenêtre autour du code (single, trBL, ...)
+	framerule=1pt,	% taille de la bordure 
+	framesep=4pt,	% padding entre bordure et contenu 
+	rulesep=1pt,	% espacement entre les deux bordures si trBL (?)
+	rulecolor=\color{black},% if not set, the frame-color may be changed on line-breaks within not-black text
+ 	% ------- Numérotation ligne -------
+  	numbers=left,	% position des numéros de ligne
+	stepnumber=1,	% chaque ligne est numérotée
+	numbersep=20pt,	% espacement entre numéro ligne et le code (5pt)
+	numberstyle=\tiny\color{gray},  % style des numéros de lignes
+	% ------- Indentation et Saut de ligne -------
+	breaklines=true,		% saut de ligne automatique
+	breakatwhitespace=false,% saut de ligne seulement lors d'un espace 
+	tabsize=2,				% tabulation de 2 espaces 
+	showspaces=false,		% afficher les espaces avec des underscores 
+	showstringspaces=false,	% souligner les espaces dans une chaine 
+	showtabs=false,			% afficher tabulation dans les chaines avec des underscores  		
+	% ------- Style des nombres et opérateurs ------ 
+	moreliterate=
+		% opérateurs
+		{.}{{\textcolor{sublim keyword}{.}}}{1}
+		{;}{{\textcolor{sublim keyword}{;}}}{1}
+		{-}{{\textcolor{sublim keyword}{-}}}{1}
+		{+}{{\textcolor{sublim keyword}{+}}}{1}
+		{!}{{\textcolor{sublim keyword}{!}}}{1}
+		{=}{{\textcolor{sublim keyword}{=}}}{1}
+		{~}{{\textcolor{sublim keyword}{~}}}{1}
+		{&}{{\textcolor{sublim keyword}{&}}}{1}
+		{|}{{\textcolor{sublim keyword}{|}}}{1}
+		% nombres
+		{0}{{\textcolor{sublim val}{0}}}{1}
+		{1}{{\textcolor{sublim val}{1}}}{1}
+		{2}{{\textcolor{sublim val}{2}}}{1}
+		{3}{{\textcolor{sublim val}{3}}}{1}
+		{4}{{\textcolor{sublim val}{4}}}{1}
+		{5}{{\textcolor{sublim val}{5}}}{1}
+		{6}{{\textcolor{sublim val}{6}}}{1}
+		{7}{{\textcolor{sublim val}{7}}}{1}
+		{8}{{\textcolor{sublim val}{8}}}{1}
+		{9}{{\textcolor{sublim val}{9}}}{1}
+		% nombres à virgules
+		{.0}{{\textcolor{sublim val}{.0}}}{2}
+		{.1}{{\textcolor{sublim val}{.1}}}{2}
+		{.2}{{\textcolor{sublim val}{.2}}}{2}
+		{.3}{{\textcolor{sublim val}{.3}}}{2}
+		{.4}{{\textcolor{sublim val}{.4}}}{2}
+		{.5}{{\textcolor{sublim val}{.5}}}{2}
+		{.6}{{\textcolor{sublim val}{.6}}}{2}
+		{.7}{{\textcolor{sublim val}{.7}}}{2}
+		{.8}{{\textcolor{sublim val}{.8}}}{2}
+		{.9}{{\textcolor{sublim val}{.9}}}{2},
+}
+% pour l'ajout des nombres, voir : http://tex.stackexchange.com/questions/40284/how-to-color-digits-with-the-listings-package
+% on utilise '\let\textcolor\textcolordummy' pour ne pas afficher la couleur des nombres et opérateurs
+
+
+% ajout du langage JavaScript
+\lstdefinelanguage{JavaScript}{
+	% ------- Mots clés ------
+	morekeywords={js, pow, math.pow, break, const, continue, delete, do, while, export, for, in, if, else, typeof, instanceof, label, let, new, return, switch, case, throw, try, catch, implements, with, yield, import},
+	% ------- Autres Motes clés ------	
+	ndkeywords={Object, Array, Math, Boolean, boolean, Number, Function, function, class, void, this, var}, 
+	% ------- Commentaire ------
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	% ------- String -------
+	morestring=[b]',
+	morestring=[b]",
+	% ------- Valeurs en plus ------
+    classoffset=3,	% starting a new class
+    morekeywords={true, false, undefined, null, Infinity},
+    keywordstyle=\color{sublim val},
+    classoffset=0,	% restore to default class if more customisations...
+	% ------- Style ------
+	backgroundcolor=\color{sublim background},
+	basicstyle=\color{white}\normalsize,
+	keywordstyle=\color{sublim keyword}\usefont{OT1}{cmtt}{m}{n},
+	ndkeywordstyle=\bfseries\color{sublim nbword},
+	identifierstyle=\ttfamily\color{white},
+	commentstyle={\slshape\color{sublim comment}\let\textcolor\textcolordummy}, %\color{purple}\ttfamily, 
+	stringstyle={\slshape\color{sublim string}\let\textcolor\textcolordummy}, %\color{red}\ttfamily,
+	% ------- Autre ------
+	sensitive=false,
+	keepspaces=false
+}
+
+% \lstlistoflistings % pour afficher la liste des listings
+
+% renommage 
+\renewcommand{\lstlistlistingname}{List of Listings (obsolete)}	% \lstlistoflistings
+\addto\captionsfrench{ 
+	%\renewcommand{\lstlistingname}{Program code} 
+	\renewcommand{\lstlistlistingname}{Liste des listings (obsolete)} 
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Minted 
+% - a besoin de : Python 2.6 (ou plus) et Pygments ("pip install Pygments")
+% - exécuter avec : 
+% latex --shell-escape <file>
+% - https://fr.sharelatex.com/learn/Code_Highlighting_with_minted 
+% - http://distrib-coffee.ipsl.jussieu.fr/pub/mirrors/ctan/macros/latex/contrib/minted/minted.pdf
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[
+	\ifundef{\chapter}{}{chapter},	% pour afficher numéro listing sous la forme Chapter.number 
+	outputdir = {./build}, 
+]{minted}
+
+% utilisation : 
+% - \minted{language}{}
+% - \newminted{language}{options} pour définir "XXXcode" environnement
+% - \inputminted[options]{language}{cheminFichier}
+
+% renommage 
+\renewcommand{\listoflistingscaption}{List of Listings}	% \listoflistings 
+\addto\captionsfrench{ 
+	%\renewcommand{\listingscaption}{Program code}
+	\renewcommand{\listoflistingscaption}{Liste des listings} 
+}
+
+\addto\captionsenglish{ 
+	\renewcommand{\listoflistingscaption}{List of Listings} 
+}
+
+
+% compteur comme ceux des tableaux / figures 
+\ifundef{\chapter}{}{
+	\renewcommand{\thelisting}{\ifnum\value{chapter}>0\relax\thechapter.\fi\arabic{listing}}
+}
+
+% fix pour \autoref{listing} (hyperref)
+\providecommand*{\listingautorefname}{\listingscaption}
+
+% ajout d'une entrée de la lol dans la toc (tocbibind)
+% - http://ctan.imsc.res.in/macros/latex/contrib/tocbibind/tocbibind.pdf 
+\renewcommand{\listoflistings}{
+	\begingroup 
+	\tocfile{\listoflistingscaption}{lol}
+	\endgroup
+}
+
+
+
+%%%
+% Paramétrage minted
+%%%
+\setminted{
+	% ------- Numéro lignes ------
+	linenos, 			% numéroter les lignes
+	% numbersep = 20pt, % (12pt) espace entre les numéro et les lignes de code
+	% numbers = left, 	% position numéro de ligne (left, right)
+	% ------- Breaklines ------	
+	breaklines, 		% autorise de casser une ligne si nécessaire (symbole \breakaftersymbolpre)
+	breakautoindent, 	% réindenter une ligne cassée 
+	breakindent = 2pt,	% indentation ajouté aux lignes cassées 
+	% ------- Font ------	
+	% fontfamily = ..
+	fontsize = \footnotesize,
+	% ------- Style ------ 
+	% style = monokai, 
+	% bgcolor = monokai background,
+	% ------- Frame ------	
+	frame = lines,		% none, leftline, topline, bottomline, lines, single
+	framerule = 0.01pt, 	% largeur de la frame 0.4pt
+	% framesep = 6pt, 		% distance entre frame et contenu (\fboxsep)
+	% rulecolor = \color{sublim comment}, 	% couleur de la frame 
+	% xleftmargin = 0, 		% marge à ajouter à gauche du listing 
+	% xrightmargin = 0, 	% marge à ajouter à droite du listing 
+	% ------- Autre ------
+	mathescape, % autorise l'utilisation des formules mathématiques
+	autogobble, % retire les espaces inutiles et indente 
+	escapeinside =@@,
+}
+
+
+
+
+% styles utilisés
+\usemintedstyle[bash]{bw}
+\usemintedstyle[bat]{bw}
+
+\usemintedstyle[python]{emacs}
+
+\usemintedstyle[c]{vs}
+\usemintedstyle[cpp]{vs}
+\usemintedstyle[csharp]{vs}
+
+\usemintedstyle[haskell]{default}
+\usemintedstyle[ocaml]{murphy}
+\usemintedstyle[prolog]{manni}
+
+\usemintedstyle[sql]{borland}
+\usemintedstyle[mysql]{borland}
+
+\usemintedstyle[tex]{tango}
+\usemintedstyle[matlab]{perldoc}
+
+\usemintedstyle[php]{pastie}
+\usemintedstyle[html]{default}
+\usemintedstyle[hxtml]{default}
+\usemintedstyle[xml]{default}
+
+\setminted[js]{
+	style = monokai,
+	bgcolor = monokai background,
+}
+
+\setminted[java]{
+	codetagify = [@Override],	% ajout d'un mot clé 
+	style = borland, 
+}
+
+
+%%%
+% Paramétrage tcolorbox
+% - background color
+% - frame 
+%%%
+%\usepackage[most]{tcolorbox}	% pour background et frame 
+%\tcbuselibrary{minted}
+%\tcbset{
+%	listing engine = minted,
+%	minted options = {
+%		numbersep = 4mm,
+%	},
+%	left = 1mm,
+%	listing only,
+%	breakable,
+%}
+%\newtcblisting{java}[1][]{
+%	minted language = java,
+%	colback = blue!5!white,
+%	colframe = blue!75!black,
+%	#1,
+%	%minted options = {fontsize=\small,numbersep=3mm},
+%}
+%\newtcbinputlisting{\javafile}[2][]{
+%	minted language = java,
+%	colback = red!5!white,
+%	colframe = red!75!black,
+%	listing file = {#2},
+%	#1
+%}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compatibilité Minted - Listings 
+% Minted casse Listings (sa liste ne marche plus) 
+% - utiliser \listoflistings (\lstlistoflistings devenu obsolète)
+% - http://tex.stackexchange.com/questions/269491/mixing-minted-with-lstlisting 
+% - http://tex.stackexchange.com/questions/270690/how-to-properly-number-between-lstlisting-and-listing-the-same-latex-file 
+%
+% - http://tex.stackexchange.com/questions/287947/figure-as-name-of-listings-in-listoflistings-with-minted-and-newfloat 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% avoir le même compteur
+\AtBeginDocument{\let\c@listing\c@lstlisting} 
+
+% résoudre problème avec tocbibind (listing devient la même chose que lstlisting) 
+\let\l@listing\l@lstlisting 
+
+
+
+% ********************************************************************
+% Référencement
+% - commande à utiliser : \vref 
+% - \fullref 2.1 page 2
+% - ordre packages : varioref, hyperlink, cleveref
+% - langue doit être passée en paramètre (fait avec kvoptions)
+% ********************************************************************
+\usepackage{varioref}
+
+
+
+% ********************************************************************
+% Hyperreferences
+% - hyperfootnotes <- easily broken 
+% - http://www.tex.ac.uk/FAQ-pdfpagelabels.html 
+%
+% - package à mettre après hyperref :  		http://texblog.net/hyperref/
+% cleveref, amsrefs, algorithm, chappg, sidecap, minitoc, linguex
+% robustindex, hypdestopt, hypcap, hypbmsec, hypernat, attachfile
+% uri, pageslts, regstats, refcheck, bookmark, glossaries, apacite
+% geometry (avec mag <> 1000), footnotebackref
+% ********************************************************************
+\usepackage[
+	linktoc = all, 		% links on title and page number in toc 
+	plainpages = false, % make page anchor using the formatted form of the page number
+	pdfpagelabels, 		% write the value of \thepage to the PDF file (say ‘ii (4 of 40)’)
+	bookmarks, 
+	% 
+	colorlinks = \ifbool{package@colorlinks}{true}{false},  
+	linkcolor = blue,	%red 
+	citecolor = red, %green
+	urlcolor = Green4, %magenta, 
+	%anchorcolor = black, 
+	%filecolor = cyan,
+	%menucolor = red, 
+	%runcolor = cyan, 
+]{hyperref} 
+
+\hypersetup{
+	pdfauthor = {Maxime PINEAU}, 
+	pdfborder = {0 0 0}, 	% remove ugly boxes 
+	% pdftitle = {}, 
+}
+
+% packages après hyperref
+
+% cleveref doit être le dernier package chargé qui modifie \ref 
+% - langue doit être passée en paramètre (fait avec kvoptions) 
+\usepackage{cleveref}	% \cref{...} : eq. 1, fig. 1, tab. 1
+
+
+\usepackage[symbol=${}^{\scriptscriptstyle\uparrow}\,\,\,$]{footnotebackref} 
+% sans redéfinir symbol, ne marche pas bien avec Babel (car babel redéfinie le numéro de note)
+% $\mkern-3\thinmuskip{}^{\scriptscriptstyle\uparrow}\,\,\,$
+
+
+% résoudre les problèmes d'indentation dans toc 
+% - \bookmarksetup{startatroot} 
+% - https://groups.google.com/forum/#!topic/comp.text.tex/LBr2vChK-QE
+% - à utiliser si problème d'indentation avec "\part" 
+%\usepackage{bookmark} 
+
+
+
+% ********************************************************************
+% Minitoc
+% ********************************************************************
+\ifbool{package@minitoc} {
+	\usepackage{minitoc}
+	% \dominitoc 	% avant \tableofcontents 
+	% \dominilof 	% avant \listoffigures
+}
+
+ 
+
+% ********************************************************************
+% Glossaire
+% ********************************************************************
+\usepackage[xindy, toc]{glossaries} % section=part => attention, ajoute une page de partie
+\makeglossaries						% générer le glossaire
+
+% modifier header glossaire (\leftmark seulement)
+% - http://tex.stackexchange.com/questions/78704/make-the-glossary-title-upper-case-in-header 
+\renewcommand{\glsglossarymark}[1]{ 
+	\markboth{#1}{}
+}
+
+% new glossary style 
+% - ordonner alphabétiquement, en les séparant (A, B, C, ...) 
+% - navigation list at the right 
+% - ajout de "page"/"pages" dans la number list (location list)
+\newcommand{\formattingnumberlist}[1]{% \glsXpageXglsnumberformat
+	\StrCount{\detokenize{#1}}{\detokenize{glsnumberformat}}[\appearances]%
+	\ifnum\appearances=1 \emph{page} \fi%
+	\ifnum\appearances>1 \emph{pages} \fi%
+	#1%
+}
+
+\newglossarystyle{rightlisthypergroup}{ 
+	\setglossarystyle{listhypergroup} 
+
+	% navigation list à droite 
+	% - http://tex.stackexchange.com/questions/296202/list-of-letter-not-folding-in-glossaries 
+	\renewcommand{\glossaryheader}{
+		\item \parbox{0.9\textwidth}{\begin{flushright} \glsnavigation \end{flushright}}
+	}
+
+	% ajout de "page"/"pages"
+	% - http://tex.stackexchange.com/questions/256152/glossaries-modified-page-list-back-references 
+	\renewcommand*{\glossentry}[2]{%
+        \item[\glsentryitem{##1}%
+        \glstarget{##1}{\glossentryname{##1}}]
+        \glossentrydesc{##1}\glspostdescription\space \formattingnumberlist{##2}%
+    }%
+}
+
+\setglossarystyle{rightlisthypergroup} 
+
+
+% new entry style, display entries description in footnote at the first time (except accronym)
+% - /!\ do not remove the '%'
+% - http://tug.ctan.org/macros/latex/contrib/glossaries/glossaries-user.html#sec:customacronym 
+\newacronymstyle{long-short-fn}{%
+	%\GlsUseAcrEntryDispStyle{long-short}%
+	\ifglshaslong{\glslabel}{\glsgenacfmt}{% if acronym
+	    \glsgenentryfmt%
+	    \ifglsused{\glslabel}{}{% if first time used 
+	        \footnote{\glsentrydesc{\glslabel}}%
+	    }%
+    }%
+}{%
+	\GlsUseAcrStyleDefs{long-short}%
+}
+
+\setacronymstyle{long-short-fn}
+
+
+
+
+% ********************************************************************
+% En-têtes et Pieds de page
+% ********************************************************************
+\usepackage{fancyhdr}	% ajoute les styles pour les header / footer
+\usepackage{pageslts}	% pour compter le nombre de pages 	
+
+% obtenir le schema de numérotation actuel et sa dernière page 
+\newcommand{\currentNumberingScheme}{\expandafter\string\pagesLTS@pnc}
+\newcommand{\lastPageCurrentNumberingScheme}{pagesLTS.\currentNumberingScheme}
+\newcommand{\thecurrentlastpage}{\lastpageref{\lastPageCurrentNumberingScheme}}
+
+% \leftmark : top level structure (chapter for report)
+% \rightmark : next top level structure (section for report) 
+
+%\ifundef{\chapter}{ } {
+	% on modifie la façon d'afficher le titre du chapitre
+	%\renewcommand{\chaptermark}[1]{\markboth{\MakeUppercase{\ #1}}{}} 
+%}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Style fancy
+% - style des pages normales
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fancyhead[L]{\nouppercase{\rightmark}} 
+\fancyhead[R]{\nouppercase{\leftmark}}
+
+\renewcommand{\headrulewidth}{0.4pt}	% trait horizontal en-tête
+\renewcommand{\footrulewidth}{0.4pt}	% trait horizontal pied de page
+
+\fancyfoot[L]{\emph{École polytechnique de l'université de Nantes, Département d'informatique}}
+\fancyfoot[C]{}	% ou : \cfoot
+\fancyfoot[R]{ Page ~\thepage ~ / ~\thecurrentlastpage }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Style plain
+% - utilisé lors d'un début de chapitre
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fancypagestyle{plain}{	
+	% reprends les champs précédents si non défini ici
+	\fancyhead[L]{}
+	\fancyhead[R]{}	
+
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0.4pt}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Style à utiliser 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fancypagestyle{myfancy}{
+    % 
+    \fancyhead[L]{\nouppercase{\rightmark}} 
+    \fancyhead[R]{\nouppercase{\leftmark}}
+
+    \renewcommand{\headrulewidth}{0.4pt}	% trait horizontal en-tête
+    \renewcommand{\footrulewidth}{0.4pt}	% trait horizontal pied de page
+
+    \fancyfoot[L]{\emph{École polytechnique de l'université de Nantes, Département d'informatique}}
+    \fancyfoot[C]{}	% ou : \cfoot
+    \fancyfoot[R]{ Page ~\thepage ~ / ~\thecurrentlastpage }
+    
+    % 
+    \fancypagestyle{plain}{
+        \fancyhead[L]{}
+	    \fancyhead[R]{}	
+
+	    \renewcommand{\headrulewidth}{0pt}
+    }
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Style Empty 
+% - pas de header / footer 
+% - sur les pages normal ET plain 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fancypagestyle{empty}{
+    %
+    \fancyhf{} 
+
+    \renewcommand{\headrulewidth}{0pt}	% trait horizontal en-tête
+    \renewcommand{\footrulewidth}{0pt}	% trait horizontal pied de page
+    
+	%
+    \fancypagestyle{plain}{
+        %\renewcommand{\footrulewidth}{0pt}
+    }
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Style annexes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fancypagestyle{appendix}{
+	% affiche le compteur en .1, .2, .3
+	\renewcommand*{\thepage}{.\arabic{page}}	
+	
+	\pagestyle{myfancy}
+}
+
+
+% défaut 
+\fancyhf{} 			% to clear all predefined fields (compatibilité package nag, chercheur d'erreur)
+\pagestyle{myfancy}	% utiliser style "fancy" (header/footer)
+%\pagenumbering{arabic}
+
+
+
+% ********************************************************************
+% Autre
+% ********************************************************************
+
+\ifbool{package@debug}{
+	
+	% afficher packages et leurs versions dans le fichier .log 
+	\listfiles 
+	
+	% met une barre noire lors d'un warning "Overfull \hbox" 
+	\overfullrule=2cm 		
+
+	% afficher le layout d'une page avec \layout 
+	\usepackage{layout}
+
+	% afficher les labels 
+	% - http://tex.stackexchange.com/questions/148579/tweak-showlabels-showkeys-wrap-the-label 
+	%\usepackage[inline]{showlabels} 
+	%\showlabels{cite}
+	%\showlabels{ref}
+	%\showlabels{pageref}
+	%\renewcommand{\showlabelfont}{\raggedright\normalfont\small\ttfamily\color{gray}}
+	%\renewcommand{\showlabelsetlabel}[1]{{\showlabelfont \{#1\}}} 	% ajouter {}
+	%\renewcommand{\showlabelrefline}{\hrule width 0pt height 1.6ex depth 0pt} 	% supprimer |
+
+}
+
+
+
+
+
+
+%\endinput

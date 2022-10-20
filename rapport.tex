@@ -1,0 +1,61 @@
+\RequirePackage[l2tabu, orthodox]{nag}
+\documentclass[11pt, a4paper]{report}
+
+\usepackage[colorlinks, debug, languages=french]{packages/preambule}
+
+% watermark
+\usepackage[
+    %firstpage
+]{draftwatermark}
+\SetWatermarkText{Confidentiel}
+\SetWatermarkColor[gray]{0.9}
+
+
+\input{glossaire/termes} % \loadglsentries
+\addbibresource{bibliographie/bibliographie.bib}
+
+
+\begin{document}
+
+\pagenumbering{roman} 	% numérotation .i, .ii, .iii
+\pagestyle{empty}		% pas de header / footer
+
+\input{pages/couverture_stage}
+\input{pages/remerciements}
+\input{pages/resume}
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic} 	% numérotation 1, 2, 3
+\pagestyle{myfancy}		% on remet le header et footer
+
+\input{pages/introduction}
+\input{pages/chapitre_1}
+% ...
+\input{pages/conclusion}
+
+
+\printbibliography[title={Webographie}, heading=bibintoc]
+% pour voir la liste des figures et des tableaux sur la même page
+\listoffigures
+\begingroup
+\let\clearpage\relax
+\listoftables
+\endgroup
+
+%\listoflistings
+\printglossary
+
+\clearpage
+\pagenumbering{Roman}	% numérotation .I, .II, .III
+\pagestyle{appendix}
+\appendix	% début des appendices, chapitre numéroté alphabétiquement
+
+%\addcontentsline{toc}{part}{Annexes}
+%\chaptermark{Annexes}
+%\part*{Annexes}
+%\input{pages/annexes/annexes}
+
+%\glsaddallunused
+
+\end{document}
