@@ -629,7 +629,8 @@
 % - http://distrib-coffee.ipsl.jussieu.fr/pub/mirrors/ctan/macros/latex/contrib/minted/minted.pdf
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[
-	\ifundef{\chapter}{}{chapter},	% pour afficher numéro listing sous la forme Chapter.number 
+	% /!\ warning le ifundef chapter ne fonctionne plus, compilation failed
+	%\ifundef{\chapter}{}{chapter},	% pour afficher numéro listing sous la forme Chapter.number
 	outputdir = {./build}, 
 ]{minted}
 
